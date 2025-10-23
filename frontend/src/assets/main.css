@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 text-white;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl;
+  }
+  
+  .glass-card-hover {
+    @apply glass-card hover:bg-white/20 transition-all duration-300 hover:shadow-2xl;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/25;
+  }
+  
+  .btn-secondary {
+    @apply bg-white/10 hover:bg-white/20 text-white font-medium px-6 py-3 rounded-lg border border-white/20 transition-all duration-300;
+  }
+  
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-300;
+  }
+  
+  .input-field {
+    @apply bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300;
+  }
+  
+  .file-upload-zone {
+    @apply border-2 border-dashed border-primary-400 rounded-xl p-8 text-center transition-all duration-300 hover:border-primary-300 hover:bg-primary-500/10;
+  }
+  
+  .file-upload-zone.dragover {
+    @apply border-primary-300 bg-primary-500/20 scale-105;
+  }
+  
+  .admin-toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-800;
+  }
+  
+  .admin-toggle.enabled {
+    @apply bg-primary-500;
+  }
+  
+  .admin-toggle.disabled {
+    @apply bg-gray-600;
+  }
+  
+  .admin-toggle-thumb {
+    @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform;
+  }
+  
+  .admin-toggle-thumb.enabled {
+    @apply translate-x-6;
+  }
+  
+  .admin-toggle-thumb.disabled {
+    @apply translate-x-1;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent;
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(45, 139, 139, 0.3);
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
