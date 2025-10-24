@@ -1,0 +1,7 @@
+# Exclude frontend directory from App Hosting builds
+frontend/
+node_modules/
+*.log
+.git/
+.gitignore
+README.md

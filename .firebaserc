@@ -1,5 +1,8 @@
 {
   "projects": {
     "default": "globaldashboard-4598e"
+  },
+  "apphosting": {
+    "rootDirectory": "."
   }
 }
