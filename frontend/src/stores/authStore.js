@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { 
-  signInWithPopup, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut, 
-  onAuthStateChanged,
-  GoogleAuthProvider 
+  onAuthStateChanged
 } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebase'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -58,13 +58,42 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Sign in with Google
-  const signInWithGoogle = async () => {
+  // Sign up with email and password
+  const signUpWithEmail = async (email, password) => {
     try {
       loading.value = true
       error.value = null
       
-      const result = await signInWithPopup(auth, new GoogleAuthProvider())
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      user.value = result.user
+      
+      // Create user profile in Firestore
+      await setDoc(doc(db, 'users', result.user.uid), {
+        email: email,
+        userType: 'user',
+        fileLimit: 500,
+        fileCount: 0,
+        createdAt: new Date()
+      })
+      
+      await fetchUserProfile(result.user.uid)
+      return result
+    } catch (error) {
+      console.error('Sign up error:', error)
+      error.value = error.message
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Sign in with email and password
+  const signInWithEmail = async (email, password) => {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const result = await signInWithEmailAndPassword(auth, email, password)
       user.value = result.user
       await fetchUserProfile(result.user.uid)
       
@@ -121,7 +150,8 @@ export const useAuthStore = defineStore('auth', () => {
     
     // Actions
     initializeAuth,
-    signInWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
     signOutUser,
     updateUserProfile,
     clearError
