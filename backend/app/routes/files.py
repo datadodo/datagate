@@ -11,6 +11,54 @@ router = APIRouter()
 storage_service = StorageService()
 firestore_service = FirestoreService()
 
+# Configuration constants
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+ALLOWED_EXTENSIONS = {
+    '.txt', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp',
+    '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm',
+    '.mp3', '.wav', '.flac', '.aac', '.ogg',
+    '.zip', '.rar', '.7z', '.tar', '.gz',
+    '.json', '.xml', '.csv', '.sql', '.py', '.js', '.html', '.css'
+}
+
+def validate_file(file: UploadFile, max_size: int = None) -> None:
+    """Validate uploaded file"""
+    # Use provided max_size or default to global MAX_FILE_SIZE
+    size_limit = max_size if max_size is not None else MAX_FILE_SIZE
+    
+    # Check file size
+    if hasattr(file, 'size') and file.size and file.size > size_limit:
+        raise HTTPException(
+            status_code=413, 
+            detail=f"File too large. Maximum size is {size_limit // (1024*1024)}MB"
+        )
+    
+    # Check file extension
+    if file.filename:
+        file_ext = os.path.splitext(file.filename.lower())[1]
+        if file_ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not allowed. Allowed extensions: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            )
+    
+    # Check MIME type
+    if file.content_type:
+        # Basic MIME type validation
+        allowed_mime_types = {
+            'text/', 'image/', 'video/', 'audio/', 'application/pdf',
+            'application/msword', 'application/vnd.openxmlformats-officedocument',
+            'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
+            'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'
+        }
+        
+        if not any(file.content_type.startswith(mime) for mime in allowed_mime_types):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file type. Please upload a valid file."
+            )
+
 @router.post("/upload", response_model=FileUploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
@@ -18,6 +66,9 @@ async def upload_file(
 ):
     """Upload a single file"""
     try:
+        # Validate file with user's specific file size limit
+        validate_file(file, max_size=current_user.file_size_limit)
+        
         # Check file limit
         if current_user.file_count >= current_user.file_limit:
             raise HTTPException(
@@ -28,6 +79,13 @@ async def upload_file(
         # Read file content
         file_content = await file.read()
         file_size = len(file_content)
+        
+        # Additional size check after reading using user's limit
+        if file_size > current_user.file_size_limit:
+            raise HTTPException(
+                status_code=413, 
+                detail=f"File too large. Maximum size is {current_user.file_size_limit // (1024*1024)}MB"
+            )
         
         # Upload to GCS
         gcs_path = storage_service.upload_file(
@@ -81,9 +139,19 @@ async def upload_batch_files(
         
         for file in files:
             try:
+                # Validate file with user's specific file size limit
+                validate_file(file, max_size=current_user.file_size_limit)
+                
                 # Read file content
                 file_content = await file.read()
                 file_size = len(file_content)
+                
+                # Additional size check after reading using user's limit
+                if file_size > current_user.file_size_limit:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File {file.filename} too large. Maximum size is {current_user.file_size_limit // (1024*1024)}MB"
+                    )
                 
                 # Upload to GCS
                 gcs_path = storage_service.upload_file(
@@ -160,7 +228,7 @@ async def get_my_files(current_user: AuthUser = Depends(get_current_user)):
             files=files,
             total_count=len(files),
             user_file_limit=current_user.file_limit,
-            user_file_count=current_user.file_count
+            user_file_count=len(files)  # Use actual file count from database
         )
         
     except Exception as e:

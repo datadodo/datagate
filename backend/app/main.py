@@ -9,9 +9,39 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Firebase Admin SDK
-cred_path = os.path.join(os.path.dirname(__file__), '..', '..', 'globaldashboard-4598e-firebase-adminsdk-fbsvc-8820178d65.json')
-cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
+import json
+import base64
+
+# Try to get service account from environment variable first
+service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
+if service_account_json:
+    try:
+        # Decode base64 encoded service account JSON
+        service_account_data = json.loads(base64.b64decode(service_account_json).decode('utf-8'))
+        cred = credentials.Certificate(service_account_data)
+        firebase_admin.initialize_app(cred)
+        print("Firebase initialized from environment variable")
+    except Exception as e:
+        print(f"Failed to initialize Firebase from environment: {e}")
+        # Try fallback to file
+        try:
+            cred_path = '/app/globaldashboard-4598e-firebase-adminsdk-fbsvc-8820178d65.json'
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+            print("Firebase initialized from file")
+        except Exception as e2:
+            print(f"Failed to initialize Firebase from file: {e2}")
+            print("Continuing without Firebase initialization")
+else:
+    # Fallback to file (for local development)
+    try:
+        cred_path = '/app/globaldashboard-4598e-firebase-adminsdk-fbsvc-8820178d65.json'
+        cred = credentials.Certificate(cred_path)
+        firebase_admin.initialize_app(cred)
+        print("Firebase initialized from file")
+    except Exception as e:
+        print(f"Failed to initialize Firebase from file: {e}")
+        print("Continuing without Firebase initialization")
 
 # Create FastAPI app
 app = FastAPI(
@@ -21,11 +51,18 @@ app = FastAPI(
 )
 
 # Configure CORS
+allowed_origins = [
+    "https://datagate.web.app",
+    "https://globaldashboard-4598e.web.app",
+    "http://localhost:3000",  # For local development
+    "http://localhost:5173",  # For Vite dev server
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

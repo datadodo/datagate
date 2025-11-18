@@ -126,6 +126,32 @@ export const useAdminStore = defineStore('admin', () => {
     }
   }
 
+  // Update user file size limit
+  const updateUserFileSizeLimit = async (userId, newSizeLimitMb) => {
+    try {
+      loading.value = true
+      error.value = null
+      
+      await api.put(`/api/admin/users/${userId}/file-size-limit`, null, {
+        params: { new_size_limit_mb: newSizeLimitMb }
+      })
+      
+      // Update local state
+      const user = users.value.find(u => u.uid === userId)
+      if (user) {
+        user.file_size_limit = newSizeLimitMb * 1024 * 1024  // Convert MB to bytes
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Error updating file size limit:', error)
+      error.value = error.response?.data?.detail || 'Failed to update file size limit'
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Update user type
   const updateUserType = async (userId, userType) => {
     try {
@@ -173,10 +199,10 @@ export const useAdminStore = defineStore('admin', () => {
     }
   }
 
-  // Get download URL for any file
+  // Get download URL for any file (admin endpoint)
   const getDownloadUrl = async (fileId) => {
     try {
-      const response = await api.get(`/api/files/${fileId}/download`)
+      const response = await api.get(`/api/admin/files/${fileId}/download`)
       return response.data.download_url
     } catch (error) {
       console.error('Error getting download URL:', error)
@@ -227,6 +253,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchStats,
     fetchUserFiles,
     updateUserFileLimit,
+    updateUserFileSizeLimit,
     updateUserType,
     deleteAnyFile,
     getDownloadUrl,

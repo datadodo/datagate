@@ -6,14 +6,32 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'Dashboard',
-      component: () => import('@/views/Dashboard.vue'),
+      name: 'UserDashboard',
+      component: () => import('@/views/UserDashboard.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/files',
+      name: 'UserFiles',
+      component: () => import('@/views/UserFiles.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/admin',
-      name: 'Admin',
-      component: () => import('@/views/AdminView.vue'),
+      name: 'AdminDashboard',
+      component: () => import('@/views/AdminDashboard.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/files',
+      name: 'AdminFiles',
+      component: () => import('@/views/AdminFiles.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/users',
+      name: 'AdminUsers',
+      component: () => import('@/views/AdminUsers.vue'),
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
@@ -26,8 +44,13 @@ const router = createRouter({
 })
 
 // Navigation guards
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  
+  // Wait for auth to initialize
+  if (!authStore.authInitialized) {
+    await authStore.initializeAuth()
+  }
   
   // Check if route requires authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

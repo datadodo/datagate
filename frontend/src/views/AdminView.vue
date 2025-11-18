@@ -1,4 +1,21 @@
 <template>
+  <div v-if="false"></div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+onMounted(() => {
+  router.replace('/admin')
+})
+</script>
+
+<!-- OLD ADMIN VIEW - REDIRECTED TO NEW STRUCTURE -->
+<!--
+<template>
   <div class="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900">
     <!-- Header -->
     <header class="glass-card m-4 rounded-xl">

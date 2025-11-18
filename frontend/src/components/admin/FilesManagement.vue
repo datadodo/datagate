@@ -23,7 +23,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-white/10">
-          <tr v-for="file in allFiles" :key="file.id" class="hover:bg-white/5 transition-colors">
+          <tr v-for="file in files" :key="file.id" class="hover:bg-white/5 transition-colors">
             <!-- File Name -->
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
@@ -47,9 +47,13 @@
 
             <!-- Owner -->
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-white/70">
+              <button 
+                @click="viewUserDetails(file.user_id)"
+                class="text-sm text-primary-400 hover:text-primary-300 transition-colors cursor-pointer"
+                :title="`Click to view ${getOwnerEmail(file.user_id)}'s details`"
+              >
                 {{ getOwnerEmail(file.user_id) }}
-              </div>
+              </button>
             </td>
 
             <!-- File Size -->
@@ -130,13 +134,22 @@
 import { ref, computed } from 'vue'
 import { useAdminStore } from '@/stores/adminStore'
 
+const props = defineProps({
+  files: {
+    type: Array,
+    default: () => []
+  }
+})
+
 const adminStore = useAdminStore()
+
+// Define emits
+const emit = defineEmits(['fileDeleted'])
 
 // Refs
 const fileToDelete = ref(null)
 
 // Computed properties
-const allFiles = computed(() => adminStore.allFiles)
 const users = computed(() => adminStore.users)
 const loading = computed(() => adminStore.loading)
 
@@ -179,8 +192,20 @@ const deleteFile = async () => {
   try {
     await adminStore.deleteAnyFile(fileToDelete.value.id)
     fileToDelete.value = null
+    // Emit event to parent to refresh
+    emit('fileDeleted')
   } catch (error) {
     console.error('Delete error:', error)
+  }
+}
+
+const viewUserDetails = (userId) => {
+  const user = users.value.find(u => u.uid === userId)
+  if (user) {
+    // Emit event to parent component to show user details
+    // For now, we'll just log it - this could be improved with a proper event system
+    console.log('View user details:', user.email)
+    // You could emit an event here: emit('viewUser', user)
   }
 }
 </script>

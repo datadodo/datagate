@@ -3,7 +3,7 @@ import { auth } from '@/firebase'
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://datagate--globaldashboard-4598e.us-central1.hosted.app',
+  baseURL: import.meta.env.VITE_API_URL || 'https://datagate-backend-815382375083.us-central1.run.app',
   timeout: 30000
 })
 

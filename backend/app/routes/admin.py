@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List
 from app.middleware.auth import get_admin_user, AuthUser
 from app.services.firestore import FirestoreService
@@ -24,6 +24,7 @@ async def get_all_users(current_user: AuthUser = Depends(get_admin_user)):
                 user_type=user_data.get('userType', 'user'),
                 file_limit=user_data.get('fileLimit', 500),
                 file_count=user_data.get('fileCount', 0),
+                file_size_limit=user_data.get('fileSizeLimit', 100 * 1024 * 1024),  # Default 100MB
                 created_at=user_data.get('createdAt')
             ))
         
@@ -52,13 +53,36 @@ async def get_all_files(current_user: AuthUser = Depends(get_admin_user)):
                 file_size=file_data['file_size'],
                 content_type=file_data['content_type'],
                 uploaded_at=file_data['uploaded_at'],
-                download_url=download_url
+                download_url=download_url,
+                user_id=file_data.get('user_id')  # Include user_id for admin view
             ))
         
         return files
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get files: {str(e)}")
+
+@router.get("/files/{file_id}/download")
+async def get_download_url_admin(file_id: str, current_user: AuthUser = Depends(get_admin_user)):
+    """Get signed download URL for any file (admin only)"""
+    try:
+        # Get file record
+        file_data = firestore_service.get_file_by_id(file_id)
+        if not file_data:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Generate signed URL (admins can download any file)
+        download_url = storage_service.generate_signed_url(file_data['gcs_path'])
+        
+        # Update the file record with the new download URL
+        firestore_service.update_file_download_url(file_id, download_url)
+        
+        return {"download_url": download_url}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate download URL: {str(e)}")
 
 @router.delete("/files/{file_id}")
 async def delete_any_file(file_id: str, current_user: AuthUser = Depends(get_admin_user)):
@@ -88,7 +112,7 @@ async def delete_any_file(file_id: str, current_user: AuthUser = Depends(get_adm
 @router.put("/users/{user_id}/file-limit")
 async def update_user_file_limit(
     user_id: str, 
-    new_limit: int,
+    new_limit: int = Query(..., description="New file limit (number of files)"),
     current_user: AuthUser = Depends(get_admin_user)
 ):
     """Update user's file upload limit (admin only)"""
@@ -106,6 +130,31 @@ async def update_user_file_limit(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update file limit: {str(e)}")
+
+@router.put("/users/{user_id}/file-size-limit")
+async def update_user_file_size_limit(
+    user_id: str,
+    new_size_limit_mb: int = Query(..., description="New file size limit in MB"),
+    current_user: AuthUser = Depends(get_admin_user)
+):
+    """Update user's file size limit in MB (admin only)"""
+    try:
+        if new_size_limit_mb < 1:
+            raise HTTPException(status_code=400, detail="File size limit must be at least 1MB")
+        
+        # Convert MB to bytes
+        new_size_limit_bytes = new_size_limit_mb * 1024 * 1024
+        
+        success = firestore_service.update_user_file_size_limit(user_id, new_size_limit_bytes)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update file size limit")
+        
+        return {"message": f"File size limit updated to {new_size_limit_mb}MB"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update file size limit: {str(e)}")
 
 @router.put("/users/{user_id}/user-type")
 async def update_user_type(
@@ -153,7 +202,8 @@ async def get_user_files(user_id: str, current_user: AuthUser = Depends(get_admi
                 file_size=file_data['file_size'],
                 content_type=file_data['content_type'],
                 uploaded_at=file_data['uploaded_at'],
-                download_url=download_url
+                download_url=download_url,
+                user_id=file_data.get('user_id')  # Include user_id for admin view
             ))
         
         return files

@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userProfile = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const authInitialized = ref(false)
 
   // Computed properties
   const isAuthenticated = computed(() => !!user.value)
@@ -21,17 +22,22 @@ export const useAuthStore = defineStore('auth', () => {
   const userType = computed(() => userProfile.value?.userType || 'user')
   const fileLimit = computed(() => userProfile.value?.fileLimit || 500)
   const fileCount = computed(() => userProfile.value?.fileCount || 0)
+  const fileSizeLimit = computed(() => userProfile.value?.fileSizeLimit || 100 * 1024 * 1024)
 
   // Initialize auth state
   const initializeAuth = () => {
-    onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        user.value = firebaseUser
-        await fetchUserProfile(firebaseUser.uid)
-      } else {
-        user.value = null
-        userProfile.value = null
-      }
+    return new Promise((resolve) => {
+      onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          user.value = firebaseUser
+          await fetchUserProfile(firebaseUser.uid)
+        } else {
+          user.value = null
+          userProfile.value = null
+        }
+        authInitialized.value = true
+        resolve()
+      })
     })
   }
 
@@ -52,10 +58,48 @@ export const useAuthStore = defineStore('auth', () => {
           createdAt: new Date()
         }
       }
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
+    } catch (err) {
+      console.error('Error fetching user profile:', err)
       error.value = 'Failed to fetch user profile'
     }
+  }
+
+  // Helper function to convert Firebase error codes to user-friendly messages
+  const getErrorMessage = (error) => {
+    const errorCode = error.code || error.message
+    
+    // Sign up errors
+    if (errorCode.includes('email-already-in-use') || errorCode.includes('auth/email-already-in-use')) {
+      return 'This email is already registered. Please sign in instead.'
+    }
+    
+    // Sign in errors
+    if (errorCode.includes('user-not-found') || errorCode.includes('auth/user-not-found')) {
+      return 'No account found with this email. Please check your email or sign up.'
+    }
+    if (errorCode.includes('wrong-password') || errorCode.includes('auth/wrong-password')) {
+      return 'Incorrect password. Please try again.'
+    }
+    if (errorCode.includes('invalid-credential') || errorCode.includes('auth/invalid-credential')) {
+      return 'Invalid email or password. Please try again.'
+    }
+    
+    // General errors
+    if (errorCode.includes('invalid-email') || errorCode.includes('auth/invalid-email')) {
+      return 'Invalid email address. Please enter a valid email.'
+    }
+    if (errorCode.includes('weak-password') || errorCode.includes('auth/weak-password')) {
+      return 'Password should be at least 6 characters long.'
+    }
+    if (errorCode.includes('too-many-requests') || errorCode.includes('auth/too-many-requests')) {
+      return 'Too many failed attempts. Please try again later.'
+    }
+    if (errorCode.includes('network-request-failed') || errorCode.includes('auth/network-request-failed')) {
+      return 'Network error. Please check your internet connection and try again.'
+    }
+    
+    // Default fallback
+    return 'An error occurred. Please try again.'
   }
 
   // Sign up with email and password
@@ -78,10 +122,10 @@ export const useAuthStore = defineStore('auth', () => {
       
       await fetchUserProfile(result.user.uid)
       return result
-    } catch (error) {
-      console.error('Sign up error:', error)
-      error.value = error.message
-      throw error
+    } catch (err) {
+      console.error('Sign up error:', err)
+      error.value = getErrorMessage(err)
+      throw err
     } finally {
       loading.value = false
     }
@@ -98,10 +142,10 @@ export const useAuthStore = defineStore('auth', () => {
       await fetchUserProfile(result.user.uid)
       
       return result
-    } catch (error) {
-      console.error('Sign in error:', error)
-      error.value = error.message
-      throw error
+    } catch (err) {
+      console.error('Sign in error:', err)
+      error.value = getErrorMessage(err)
+      throw err
     } finally {
       loading.value = false
     }
@@ -140,6 +184,7 @@ export const useAuthStore = defineStore('auth', () => {
     userProfile,
     loading,
     error,
+    authInitialized,
     
     // Computed
     isAuthenticated,
@@ -147,6 +192,7 @@ export const useAuthStore = defineStore('auth', () => {
     userType,
     fileLimit,
     fileCount,
+    fileSizeLimit,
     
     // Actions
     initializeAuth,

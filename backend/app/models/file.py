@@ -15,6 +15,7 @@ class FileResponse(BaseModel):
     content_type: str
     uploaded_at: datetime
     download_url: Optional[str] = None
+    user_id: Optional[str] = None  # For admin view to show file owner
 
 class FileUploadResponse(BaseModel):
     file_id: str
@@ -35,11 +36,13 @@ class UserResponse(BaseModel):
     user_type: str
     file_limit: int
     file_count: int
+    file_size_limit: int  # File size limit in bytes
     created_at: Optional[datetime] = None
 
 class UpdateUserRequest(BaseModel):
     user_type: Optional[str] = None
     file_limit: Optional[int] = None
+    file_size_limit: Optional[int] = None  # File size limit in bytes
 
 class FileListResponse(BaseModel):
     files: List[FileResponse]

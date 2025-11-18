@@ -120,13 +120,19 @@
 import { ref, computed } from 'vue'
 import { useFilesStore } from '@/stores/filesStore'
 
+const props = defineProps({
+  files: {
+    type: Array,
+    default: () => []
+  }
+})
+
 const filesStore = useFilesStore()
 
 // Refs
 const fileToDelete = ref(null)
 
 // Computed properties
-const files = computed(() => filesStore.files)
 const loading = computed(() => filesStore.loading)
 
 // Methods

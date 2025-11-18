@@ -1,4 +1,21 @@
 <template>
+  <div v-if="false"></div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+onMounted(() => {
+  router.replace('/')
+})
+</script>
+
+<!-- OLD DASHBOARD - REDIRECTED TO NEW STRUCTURE -->
+<!--
+<template>
   <div class="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900">
     <!-- Header -->
     <header class="glass-card m-4 rounded-xl">
@@ -45,7 +62,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="px-4 pb-8">
+    <main class="px-4 pb-8" v-if="authInitialized">
       <div class="max-w-7xl mx-auto space-y-6">
         <!-- File Upload Zone -->
         <FileUploadZone />
@@ -87,6 +104,16 @@
         </div>
       </div>
     </main>
+
+    <!-- Auth Loading State -->
+    <main class="px-4 pb-8" v-else>
+      <div class="max-w-7xl mx-auto flex items-center justify-center min-h-[60vh]">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-2 border-primary-500 border-t-transparent mx-auto mb-4"></div>
+          <p class="text-white/70">Loading...</p>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
@@ -111,6 +138,7 @@ const userFileCount = computed(() => authStore.fileCount)
 const userFileLimit = computed(() => authStore.fileLimit)
 const filesCount = computed(() => filesStore.filesCount)
 const loading = computed(() => filesStore.loading)
+const authInitialized = computed(() => authStore.authInitialized)
 
 // Methods
 const handleSignOut = async () => {

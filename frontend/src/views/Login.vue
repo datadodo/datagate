@@ -3,12 +3,9 @@
     <div class="max-w-md w-full space-y-8">
       <!-- Logo and Title -->
       <div class="text-center">
-        <div class="mx-auto h-16 w-16 bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-6">
-          <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-          </svg>
+        <div class="mx-auto mb-6 flex justify-center">
+          <img src="@/assets/kapsule-logo.svg" alt="Kapsule" class="h-20 w-auto" />
         </div>
-        <h2 class="text-3xl font-bold text-white mb-2">DataGate</h2>
         <p class="text-white/70">Secure file management system</p>
       </div>
 
@@ -107,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -121,6 +118,11 @@ const password = ref('')
 const loading = computed(() => authStore.loading)
 const error = computed(() => authStore.error)
 
+// Clear error when switching between Sign In and Sign Up
+watch(isSignUp, () => {
+  authStore.clearError()
+})
+
 const handleSubmit = async () => {
   try {
     authStore.clearError()
@@ -133,6 +135,7 @@ const handleSubmit = async () => {
     
     router.push('/')
   } catch (err) {
+    // Error is already set in the store, so it will be displayed automatically
     console.error('Authentication error:', err)
   }
 }
