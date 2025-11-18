@@ -3,9 +3,16 @@
     <div class="max-w-md w-full space-y-8">
       <!-- Logo and Title -->
       <div class="text-center">
+        <!-- Kapsule Logo -->
         <div class="mx-auto mb-6 flex justify-center">
-          <img src="@/assets/kapsule-logo.svg" alt="Kapsule" class="h-20 w-auto" />
+          <img 
+            :src="kapsuleLogo" 
+            alt="Kapsule Logo" 
+            class="h-16 w-auto"
+            @error="handleImageError"
+          />
         </div>
+        <h2 class="text-3xl font-bold text-white mb-2">DataGate</h2>
         <p class="text-white/70">Secure file management system</p>
       </div>
 
@@ -107,6 +114,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import kapsuleLogo from '@/assets/kapsule-logo.svg'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -138,5 +146,10 @@ const handleSubmit = async () => {
     // Error is already set in the store, so it will be displayed automatically
     console.error('Authentication error:', err)
   }
+}
+
+const handleImageError = (event) => {
+  // Fallback if image doesn't load - you can add a fallback image here
+  console.warn('Logo image failed to load')
 }
 </script>

@@ -5,7 +5,11 @@
       <div class="flex items-center justify-between p-6">
         <!-- Logo and Title -->
         <div class="flex items-center space-x-4">
-          <img src="@/assets/kapsule-logo.svg" alt="Kapsule" class="h-10 w-auto" />
+          <div class="h-10 w-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
           <div>
             <h1 class="text-2xl font-bold text-white">Dashboard</h1>
             <p class="text-white/70 text-sm">Overview & Statistics</p>
