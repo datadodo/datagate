@@ -21,6 +21,6 @@ ENV PYTHONPATH=/app
 # Expose port
 EXPOSE 8080
 
-# Run the application
+# Run the application with increased timeout and limits for large file uploads
 WORKDIR /app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--timeout-keep-alive", "600", "--limit-max-requests", "1000"]

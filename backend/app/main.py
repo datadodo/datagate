@@ -44,6 +44,8 @@ else:
         print("Continuing without Firebase initialization")
 
 # Create FastAPI app
+# Note: FastAPI/Starlette handles large file uploads by streaming, so no explicit size limit needed
+# The main constraints are timeouts, which we configure at the uvicorn level
 app = FastAPI(
     title="DataGate API",
     description="File upload and management system with Firebase Authentication",

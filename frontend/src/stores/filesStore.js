@@ -58,10 +58,20 @@ export const useFilesStore = defineStore('files', () => {
       const formData = new FormData()
       formData.append('file', file)
       
+      // Calculate timeout based on file size (minimum 5 minutes, add 1 minute per 50MB)
+      // For 100MB: 5 min + 2 min = 7 minutes
+      // For 500MB: 5 min + 10 min = 15 minutes
+      const fileSizeMB = file.size / (1024 * 1024)
+      const timeoutMinutes = Math.max(5, 5 + Math.ceil(fileSizeMB / 50))
+      const timeoutMs = timeoutMinutes * 60 * 1000
+      
       const response = await api.post('/api/files/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
+        timeout: timeoutMs,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
           uploadProgress.value[file.name] = progress
@@ -87,14 +97,24 @@ export const useFilesStore = defineStore('files', () => {
   const uploadBatchFiles = async (files) => {
     try {
       const formData = new FormData()
+      let totalSize = 0
       files.forEach(file => {
         formData.append('files', file)
+        totalSize += file.size
       })
+      
+      // Calculate timeout based on total file size
+      const totalSizeMB = totalSize / (1024 * 1024)
+      const timeoutMinutes = Math.max(5, 5 + Math.ceil(totalSizeMB / 50))
+      const timeoutMs = timeoutMinutes * 60 * 1000
       
       const response = await api.post('/api/files/upload-batch', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
+        timeout: timeoutMs,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
           files.forEach(file => {
